@@ -8,12 +8,15 @@ from dotenv import load_dotenv
 load_dotenv("../.env")
 
 from app.api.v1.router import router as api_v1_router
-from app.core.database import engine
-from app.models import user, repository
+from app.core.database import engine, Base
+
+# Import models to register them with SQLAlchemy
+from app.models.user import User
+from app.models.repository import Repository
+from app.models.analysis import Analysis, CodeIssue
 
 # Create database tables
-user.Base.metadata.create_all(bind=engine)
-repository.Base.metadata.create_all(bind=engine)
+Base.metadata.create_all(bind=engine)
 
 app = FastAPI(
     title="CodeCritic AI API",

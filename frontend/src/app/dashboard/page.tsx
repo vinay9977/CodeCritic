@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { syncRepositories, listRepositories, getRepositoryStats, startAnalysis } from '@/lib/api';
-import { Github, Code, Star, GitFork, RefreshCw } from 'lucide-react';
+import { Github, Code, Star, GitFork, RefreshCw, ExternalLink } from 'lucide-react';
 
 interface Repository {
   id: number;
@@ -93,11 +93,13 @@ export default function DashboardPage() {
       const result = await startAnalysis(repoId);
       
       if (result.status === 'completed') {
-        alert(`✅ Analysis completed for ${repoName}!\n\nAnalysis ID: ${result.analysis_id}`);
+        // Navigate to results page
+        router.push(`/analysis/results?id=${result.analysis_id}`);
       } else if (result.status === 'failed') {
         alert(`❌ Analysis failed for ${repoName}`);
       } else {
-        alert(`⏳ Analysis in progress for ${repoName}...`);
+        // Navigate to results page even if in progress
+        router.push(`/analysis/results?id=${result.analysis_id}`);
       }
     } catch (error: any) {
       console.error('Failed to start analysis:', error);
@@ -184,29 +186,37 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          {/* Sync Button */}
-          <div className="mb-6">
-            <button
-              onClick={handleSyncRepositories}
-              disabled={syncing}
-              className="inline-flex items-center px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              <RefreshCw className={`w-5 h-5 mr-2 ${syncing ? 'animate-spin' : ''}`} />
-              {syncing ? 'Syncing...' : 'Sync GitHub Repositories'}
-            </button>
-          </div>
-
-          {/* Repositories List */}
+          {/* Repositories Section */}
           <div className="bg-white rounded-lg shadow">
-            <div className="px-6 py-4 border-b border-gray-200">
-              <h3 className="text-lg font-medium text-gray-900">Your Repositories</h3>
+            <div className="p-6 border-b border-gray-200">
+              <div className="flex justify-between items-center">
+                <h3 className="text-2xl font-bold text-gray-900">Your Repositories</h3>
+                <button
+                  onClick={handleSyncRepositories}
+                  disabled={syncing}
+                  className="flex items-center bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <RefreshCw className={`w-4 h-4 mr-2 ${syncing ? 'animate-spin' : ''}`} />
+                  {syncing ? 'Syncing...' : 'Sync Repositories'}
+                </button>
+              </div>
             </div>
-            
+
             {loading ? (
-              <div className="p-6 text-center text-gray-500">Loading repositories...</div>
+              <div className="p-12 text-center">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto"></div>
+                <p className="mt-4 text-gray-600">Loading repositories...</p>
+              </div>
             ) : repositories.length === 0 ? (
-              <div className="p-6 text-center text-gray-500">
-                No repositories found. Click "Sync GitHub Repositories" to import your repos.
+              <div className="p-12 text-center">
+                <Code className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+                <p className="text-gray-600 mb-4">No repositories found</p>
+                <button
+                  onClick={handleSyncRepositories}
+                  className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+                >
+                  Sync Your Repositories
+                </button>
               </div>
             ) : (
               <div className="divide-y divide-gray-200">
@@ -214,27 +224,28 @@ export default function DashboardPage() {
                   <div key={repo.id} className="p-6 hover:bg-gray-50">
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
-                        <div className="flex items-center space-x-2">
+                        <div className="flex items-center gap-2 mb-2">
                           <a
                             href={repo.html_url}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="text-lg font-semibold text-blue-600 hover:text-blue-800"
+                            className="text-xl font-semibold text-blue-600 hover:text-blue-800 flex items-center gap-1"
                           >
                             {repo.full_name}
+                            <ExternalLink className="w-4 h-4" />
                           </a>
                           {repo.is_private && (
-                            <span className="px-2 py-1 text-xs bg-yellow-100 text-yellow-800 rounded">
+                            <span className="px-2 py-1 text-xs bg-gray-200 text-gray-700 rounded">
                               Private
                             </span>
                           )}
                         </div>
                         
                         {repo.description && (
-                          <p className="mt-1 text-sm text-gray-600">{repo.description}</p>
+                          <p className="text-gray-600 mb-3">{repo.description}</p>
                         )}
                         
-                        <div className="mt-2 flex items-center space-x-4 text-sm text-gray-500">
+                        <div className="flex items-center gap-4 text-sm text-gray-500">
                           {repo.language && (
                             <span className="flex items-center">
                               <Code className="w-4 h-4 mr-1" />
@@ -252,10 +263,10 @@ export default function DashboardPage() {
                         </div>
                       </div>
                       
-                      <button 
-                        onClick={() => handleAnalyzeRepository(repo.id, repo.full_name)}
+                      <button
+                        onClick={() => handleAnalyzeRepository(repo.id, repo.name)}
                         disabled={analyzingRepos.has(repo.id)}
-                        className="ml-4 px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-sm rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="ml-4 bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded disabled:opacity-50 disabled:cursor-not-allowed"
                       >
                         {analyzingRepos.has(repo.id) ? 'Analyzing...' : 'Analyze'}
                       </button>

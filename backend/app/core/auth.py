@@ -23,9 +23,10 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
 def verify_token(token: str):
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        user_id: int = payload.get("sub")
+        user_id: str = payload.get("sub")  # JWT returns string
         if user_id is None:
             return None
-        return user_id
-    except JWTError:
+        # CRITICAL FIX: Convert string to integer
+        return int(user_id)
+    except (JWTError, ValueError, TypeError):
         return None

@@ -53,7 +53,11 @@ def create_or_update_repository(db: Session, user_id: int, repo_data: dict) -> R
         for key, value in repo_data.items():
             if hasattr(existing_repo, key):
                 setattr(existing_repo, key, value)
+        
+        # FIX: Always update user_id to current logged-in user
+        existing_repo.user_id = user_id
         existing_repo.last_synced_at = datetime.utcnow()
+        
         db.commit()
         db.refresh(existing_repo)
         return existing_repo

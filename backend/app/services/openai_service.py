@@ -26,6 +26,12 @@ class OpenAIService:
         
         # Enable mock mode for testing (will use if OpenAI fails)
         self.mock_mode = os.getenv("USE_MOCK_ANALYSIS", "false").lower() == "true"
+        
+        # LOGGING
+        if self.mock_mode:
+            print("⚠️  MOCK MODE ENABLED - Will not call OpenAI API")
+        else:
+            print("✅ OpenAI Service initialized - Real API calls enabled")
     
     def analyze_code(self, code_files: List[Dict[str, str]], language: str = "python") -> Dict[str, Any]:
         """
@@ -38,18 +44,31 @@ class OpenAIService:
         Returns:
             Analysis results with issues and score
         """
+        print(f"\n{'='*60}")
+        print(f"OPENAI ANALYSIS REQUEST")
+        print(f"{'='*60}")
+        print(f"Files to analyze: {len(code_files)}")
+        print(f"Language: {language}")
+        print(f"Mock mode: {self.mock_mode}")
+        
         # If mock mode enabled, return mock data
         if self.mock_mode:
+            print("⚠️  Using mock analysis (mock mode enabled)")
             return self._generate_mock_analysis(code_files, language)
         
         try:
             # Prepare consolidated code for analysis
+            print("📝 Preparing code context...")
             code_context = self._prepare_code_context(code_files, language)
+            print(f"   Context size: {len(code_context)} characters")
             
             # Create optimized prompt
+            print("🎯 Creating analysis prompt...")
             prompt = self._create_analysis_prompt(code_context, language)
+            print(f"   Prompt size: {len(prompt)} characters")
             
             # Call OpenAI API
+            print("🤖 Calling OpenAI API...")
             response = self.client.chat.completions.create(
                 model=self.model,
                 messages=[
@@ -67,8 +86,12 @@ class OpenAIService:
                 response_format={"type": "json_object"}  # Ensure JSON response
             )
             
+            print("✅ OpenAI API call successful!")
+            print(f"   Tokens used: {response.usage.total_tokens}")
+            
             # Extract and parse response
             result = response.choices[0].message.content
+            print("📊 Parsing analysis results...")
             analysis_data = json.loads(result)
             
             # Calculate cost
@@ -84,20 +107,31 @@ class OpenAIService:
             analysis_data["estimated_cost"] = round(estimated_cost, 6)
             analysis_data["files_analyzed"] = len(code_files)
             
+            print(f"✅ Analysis complete!")
+            print(f"   Overall score: {analysis_data.get('overall_score', 'N/A')}")
+            print(f"   Issues found: {len(analysis_data.get('issues', []))}")
+            print(f"   Cost: ${estimated_cost:.6f}")
+            print(f"{'='*60}\n")
+            
             return analysis_data
             
         except json.JSONDecodeError as e:
+            print(f"❌ JSON parsing error: {str(e)}")
+            print(f"   Raw response: {result[:200]}...")
             raise HTTPException(
                 status_code=500,
                 detail=f"Failed to parse OpenAI response: {str(e)}"
             )
         except Exception as e:
             error_msg = str(e)
+            print(f"❌ OpenAI API Error: {error_msg}")
+            
             # If connection error, try mock mode as fallback
             if "connection" in error_msg.lower() or "timeout" in error_msg.lower():
-                print(f"⚠️  OpenAI connection failed, using mock analysis: {error_msg}")
+                print(f"⚠️  Connection/timeout error, using mock analysis")
                 return self._generate_mock_analysis(code_files, language)
             
+            print(f"❌ Fatal error - not using mock fallback")
             raise HTTPException(
                 status_code=500,
                 detail=f"OpenAI API error: {str(e)}"
@@ -185,6 +219,7 @@ Keep response concise. Score from 0-100 (100 = perfect). List max 10 most import
         """
         Generate mock analysis for testing when OpenAI is unavailable
         """
+        print("🎭 Generating mock analysis...")
         total_lines = sum(f.get('lines', len(f['content'].split('\n'))) for f in code_files)
         
         # Generate sample issues based on file content

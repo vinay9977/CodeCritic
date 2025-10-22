@@ -1,10 +1,11 @@
 from fastapi import APIRouter
-from app.api.v1.endpoints import auth, repositories
+from app.api.v1.endpoints import auth, repositories, analysis
 
 router = APIRouter()
 
 router.include_router(auth.router, prefix="/auth", tags=["Authentication"])
 router.include_router(repositories.router, prefix="/repositories", tags=["Repositories"])
+router.include_router(analysis.router, prefix="/analysis", tags=["Analysis"])
 
 @router.get("/")
 async def api_status():

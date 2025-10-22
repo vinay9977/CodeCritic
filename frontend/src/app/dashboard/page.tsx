@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { syncRepositories, listRepositories, getRepositoryStats, startAnalysis } from '@/lib/api';
-import { Github, Code, Star, GitFork, RefreshCw, ExternalLink } from 'lucide-react';
+import { Github, Code, Star, GitFork, RefreshCw } from 'lucide-react';
 
 interface Repository {
   id: number;
@@ -93,13 +93,13 @@ export default function DashboardPage() {
       const result = await startAnalysis(repoId);
       
       if (result.status === 'completed') {
-        // Navigate to results page
-        router.push(`/analysis/results?id=${result.analysis_id}`);
+        // Automatically redirect to analytics page
+        router.push(`/analytics/${result.analysis_id}`);
       } else if (result.status === 'failed') {
         alert(`❌ Analysis failed for ${repoName}`);
       } else {
-        // Navigate to results page even if in progress
-        router.push(`/analysis/results?id=${result.analysis_id}`);
+        // For any other status, still redirect to analytics page
+        router.push(`/analytics/${result.analysis_id}`);
       }
     } catch (error: any) {
       console.error('Failed to start analysis:', error);
@@ -187,65 +187,53 @@ export default function DashboardPage() {
           </div>
 
           {/* Repositories Section */}
-          <div className="bg-white rounded-lg shadow">
-            <div className="p-6 border-b border-gray-200">
-              <div className="flex justify-between items-center">
-                <h3 className="text-2xl font-bold text-gray-900">Your Repositories</h3>
-                <button
-                  onClick={handleSyncRepositories}
-                  disabled={syncing}
-                  className="flex items-center bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  <RefreshCw className={`w-4 h-4 mr-2 ${syncing ? 'animate-spin' : ''}`} />
-                  {syncing ? 'Syncing...' : 'Sync Repositories'}
-                </button>
-              </div>
+          <div className="bg-white rounded-lg shadow p-6">
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-xl font-bold text-gray-900">
+                Your Repositories
+              </h3>
+              <button
+                onClick={handleSyncRepositories}
+                disabled={syncing}
+                className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <RefreshCw className={`w-4 h-4 mr-2 ${syncing ? 'animate-spin' : ''}`} />
+                {syncing ? 'Syncing...' : 'Sync Repositories'}
+              </button>
             </div>
 
             {loading ? (
-              <div className="p-12 text-center">
+              <div className="text-center py-12">
                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto"></div>
                 <p className="mt-4 text-gray-600">Loading repositories...</p>
               </div>
             ) : repositories.length === 0 ? (
-              <div className="p-12 text-center">
-                <Code className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+              <div className="text-center py-12">
+                <Github className="w-16 h-16 text-gray-400 mx-auto mb-4" />
                 <p className="text-gray-600 mb-4">No repositories found</p>
                 <button
                   onClick={handleSyncRepositories}
-                  className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+                  className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
                 >
                   Sync Your Repositories
                 </button>
               </div>
             ) : (
-              <div className="divide-y divide-gray-200">
+              <div className="space-y-4">
                 {repositories.map((repo) => (
-                  <div key={repo.id} className="p-6 hover:bg-gray-50">
-                    <div className="flex items-start justify-between">
+                  <div
+                    key={repo.id}
+                    className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow"
+                  >
+                    <div className="flex justify-between items-start">
                       <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-2">
-                          <a
-                            href={repo.html_url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-xl font-semibold text-blue-600 hover:text-blue-800 flex items-center gap-1"
-                          >
-                            {repo.full_name}
-                            <ExternalLink className="w-4 h-4" />
-                          </a>
-                          {repo.is_private && (
-                            <span className="px-2 py-1 text-xs bg-gray-200 text-gray-700 rounded">
-                              Private
-                            </span>
-                          )}
-                        </div>
-                        
-                        {repo.description && (
-                          <p className="text-gray-600 mb-3">{repo.description}</p>
-                        )}
-                        
-                        <div className="flex items-center gap-4 text-sm text-gray-500">
+                        <h4 className="text-lg font-semibold text-gray-900 mb-1">
+                          {repo.name}
+                        </h4>
+                        <p className="text-sm text-gray-600 mb-3">
+                          {repo.description || 'No description available'}
+                        </p>
+                        <div className="flex items-center space-x-4 text-sm text-gray-500">
                           {repo.language && (
                             <span className="flex items-center">
                               <Code className="w-4 h-4 mr-1" />
@@ -262,11 +250,10 @@ export default function DashboardPage() {
                           </span>
                         </div>
                       </div>
-                      
                       <button
                         onClick={() => handleAnalyzeRepository(repo.id, repo.name)}
                         disabled={analyzingRepos.has(repo.id)}
-                        className="ml-4 bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="ml-4 px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
                       >
                         {analyzingRepos.has(repo.id) ? 'Analyzing...' : 'Analyze'}
                       </button>

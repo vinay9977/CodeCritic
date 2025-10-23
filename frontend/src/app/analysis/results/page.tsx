@@ -6,6 +6,8 @@ import { useAuth } from '@/contexts/AuthContext';
 import { getAnalysis } from '@/lib/api';
 import { ArrowLeft, AlertCircle, CheckCircle, AlertTriangle, XCircle, FileCode, Clock, DollarSign } from 'lucide-react';
 
+export const dynamic = 'force-dynamic';
+
 interface CodeIssue {
   id: number;
   severity: string;

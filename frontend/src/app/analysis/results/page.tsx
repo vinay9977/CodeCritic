@@ -1,12 +1,12 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+export const dynamic = 'force-dynamic';
+
+import { useEffect, useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { getAnalysis } from '@/lib/api';
 import { ArrowLeft, AlertCircle, CheckCircle, AlertTriangle, XCircle, FileCode, Clock, DollarSign } from 'lucide-react';
-
-export const dynamic = 'force-dynamic';
 
 interface CodeIssue {
   id: number;
@@ -40,7 +40,7 @@ interface Analysis {
   issues: CodeIssue[];
 }
 
-export default function AnalysisResultsPage() {
+function AnalysisResultsContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user, loading: authLoading } = useAuth();
@@ -328,5 +328,20 @@ export default function AnalysisResultsPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function AnalysisResultsPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-500 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Loading...</p>
+        </div>
+      </div>
+    }>
+      <AnalysisResultsContent />
+    </Suspense>
   );
 }

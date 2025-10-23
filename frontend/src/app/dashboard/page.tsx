@@ -6,6 +6,8 @@ import { useAuth } from '@/contexts/AuthContext';
 import { syncRepositories, listRepositories, getRepositoryStats, startAnalysis } from '@/lib/api';
 import { Github, Code, Star, GitFork, RefreshCw } from 'lucide-react';
 
+export const dynamic = 'force-dynamic';
+
 interface Repository {
   id: number;
   name: string;

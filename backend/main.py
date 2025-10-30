@@ -31,6 +31,7 @@ app.add_middleware(
         "http://localhost:3000",
         "http://127.0.0.1:3000",
         "https://code-critic-fn81lq7eq-vinays-projects-c22223e9.vercel.app" ,
+        "https://code-critic-nine.vercel.app",
     ],
     allow_credentials=True,
     allow_methods=["*"],

@@ -1,3 +1,8 @@
+# Langman configure
+import langman
+
+langman.configure(api_key="zumie_live_6iMtFQwR3CQfWqgBAEdE2g5oqXAF-aJH7X_N5emNomA", agent_name="TestConfig")
+
 """
 Test if OpenAI and other configurations are set up correctly
 Run: python test_config.py
